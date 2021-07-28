@@ -44,6 +44,10 @@ final nAddTrackSf2 = nativeLib.lookupFunction<
   Void Function(Pointer<Utf8>, Int8, Int32, Int64),
   void Function(Pointer<Utf8>, int, int, int)>('add_track_sf2');
 
+final nAddTrackSfz = nativeLib.lookupFunction<
+  Void Function(Pointer<Utf8>, Int8, Int64),
+  void Function(Pointer<Utf8>, int, int)>('add_track_sfz');
+
 final nRemoveTrack = nativeLib.lookupFunction<
   Void Function(Int32),
   void Function(int?)>('remove_track');
@@ -159,6 +163,11 @@ class NativeBridge {
   static Future<int> addTrackSf2(String filename, bool isAsset, int patchNumber) {
     final filenameUtf8Ptr = filename.toNativeUtf8();
     return singleResponseFuture<int>((port) => nAddTrackSf2(filenameUtf8Ptr, isAsset ? 1 : 0, patchNumber, port.nativePort));
+  }
+
+  static Future<int> addTrackSfz(String filename, bool isAsset) {
+    final filenameUtf8Ptr = filename.toNativeUtf8();
+    return singleResponseFuture<int>((port) => nAddTrackSfz(filenameUtf8Ptr, isAsset ? 1 : 0, port.nativePort));
   }
 
   static Future<int?> addTrackAudioUnit(String id) async {

@@ -1,13 +1,14 @@
 #include <thread>
 #include "AndroidEngine/AndroidEngine.h"
 #include "Engine/SamplerInstrument.h"
+#include "Engine/SfizzSamplerInstrument.h"
 #include "Engine/SoundFontInstrument.h"
 #include "Utils/OptionArray.h"
 
 std::unique_ptr<AndroidEngine> engine;
 
 void check_engine() {
-    if (engine.get() == NULL) {
+    if (engine == nullptr) {
         throw std::runtime_error("Engine is not set up. Ensure that setup_engine() is called before calling this method.");
     }
 }
@@ -129,6 +130,22 @@ extern "C" {
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
+    void add_track_sfz(const char* filename, bool isAsset, Dart_Port callbackPort) {
+        check_engine();
+
+        std::thread([=]() {
+            auto sampleRate = engine->getSampleRate();
+            auto channelCount = engine->getChannelCount();
+            auto isStereo = channelCount > 1;
+
+            auto sf2Instrument = new SfizzSamplerInstrument(sampleRate, isStereo, filename, isAsset);
+            auto trackIndex = engine->mSchedulerMixer.addTrack(sf2Instrument);
+
+            callbackToDartInt32(callbackPort, trackIndex);
+        }).detach();
+    }
+
+__attribute__((visibility("default"))) __attribute__((used))
     void remove_track(track_index_t trackIndex) {
         check_engine();
 

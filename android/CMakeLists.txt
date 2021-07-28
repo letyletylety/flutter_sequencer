@@ -30,9 +30,19 @@ SET (LIBNYQUIST_DIR ./third_party/libnyquist)
 ADD_SUBDIRECTORY(${LIBNYQUIST_DIR})
 INCLUDE_DIRECTORIES(${LIBNYQUIST_DIR}/include/libnyquist)
 
-Add_Library(
-        flutter_sequencer
-        SHARED
+OPTION(SFIZZ_JACK "" OFF)
+OPTION(SFIZZ_RENDER "" OFF)
+OPTION(SFIZZ_LV2 "" OFF)
+OPTION(SFIZZ_LV2_UI "" OFF)
+OPTION(SFIZZ_VST "" OFF)
+OPTION(SFIZZ_AU "" OFF)
+OPTION(SFIZZ_SHARED "" OFF)
+Set(SFIZZ_DIR ./third_party/sfizz)
+Add_Subdirectory(${SFIZZ_DIR})
+
+Add_Library(flutter_sequencer SHARED)
+
+TARGET_SOURCES(flutter_sequencer PRIVATE
         ../ios/Classes/CallbackManager/CallbackManager.h
         ../ios/Classes/CallbackManager/CallbackManager.cpp
         ../ios/Classes/Scheduler/BaseScheduler.h
@@ -46,6 +56,7 @@ Add_Library(
         ./src/main/cpp/Engine/Mixer.h
         ./src/main/cpp/Engine/SoundFontInstrument.h
         ./src/main/cpp/Engine/SamplerInstrument.h
+        ./src/main/cpp/Engine/SfizzSamplerInstrument.h
         ./src/main/cpp/Utils/AssetManager.h
         ./src/main/cpp/Utils/Logging.h
         ./src/main/cpp/Utils/OptionArray.h
@@ -56,4 +67,4 @@ Add_Library(
 
 Find_Library(android-lib android)
 
-Target_Link_Libraries(flutter_sequencer ${android-lib} oboe libnyquist)
+Target_Link_Libraries(flutter_sequencer ${android-lib} oboe libnyquist sfizz_static)

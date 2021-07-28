@@ -347,13 +347,14 @@ class Sequence {
     if (instrument is Sf2Instrument) {
       id = await NativeBridge.addTrackSf2(instrument.idOrPath, instrument.isAsset, instrument.presetIndex);
     } else if (instrument is SfzInstrument) {
-      final parseResult = await parseSfz(instrument.idOrPath, instrument.isAsset);
-      final samplerInstrument =
-      SamplerInstrument(
-        id: instrument.idOrPath,
-        sampleDescriptors: parseResult.sampleDescriptors);
+      id = await NativeBridge.addTrackSfz(instrument.idOrPath, instrument.isAsset);
+      // final parseResult = await parseSfz(instrument.idOrPath, instrument.isAsset);
+      // final samplerInstrument =
+      // SamplerInstrument(
+      //   id: instrument.idOrPath,
+      //   sampleDescriptors: parseResult.sampleDescriptors);
 
-      id = await _createSamplerTrack(samplerInstrument);
+      // id = await _createSamplerTrack(samplerInstrument);
     } else if (instrument is SamplerInstrument) {
       id = await _createSamplerTrack(instrument);
     } else if (instrument is AudioUnitInstrument) {

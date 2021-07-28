@@ -47,7 +47,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
     final instruments = [
       Sf2Instrument(path: "assets/sf2/TR-808.sf2", isAsset: true),
-      SfzInstrument(path: "assets/sfz/SplendidGrandPiano.sfz", isAsset: true),
+      SfzInstrument(path: "/sdcard/sfz/GeneralMidi/000_Piano 1.sfz", isAsset: false),
       SamplerInstrument(
         id: "80's FM Bass",
         sampleDescriptors: [
