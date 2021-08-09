@@ -34,4 +34,5 @@ A new flutter plugin project.
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++2a',
     'CLANG_CXX_LIBRARY' => 'libc++'
   }
+  s.prepare_command = './prepare.sh'
 end
