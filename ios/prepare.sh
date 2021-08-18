@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 if [ ! -d third_party ]; then
     mkdir third_party
@@ -28,6 +28,7 @@ fi
 
 cd build
 
+# Generate XCode project for Sfizz
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DSFIZZ_JACK=OFF \
@@ -36,24 +37,25 @@ cmake \
     -DSFIZZ_LV2_UI=OFF \
     -DSFIZZ_VST=OFF \
     -DSFIZZ_AU=OFF \
+    -DSFIZZ_SHARED=OFF \
+    -DCMAKE_TOOLCHAIN_FILE=../../ios-cmake/ios.toolchain.cmake \
+    -DAPPLE_APPKIT_LIBRARY=/System/Library/Frameworks/AppKit.framework \
+    -DAPPLE_CARBON_LIBRARY=/System/Library/Frameworks/Carbon.framework \
+    -DAPPLE_COCOA_LIBRARY=/System/Library/Frameworks/Cocoa.framework \
+    -DAPPLE_OPENGL_LIBRARY=/System/Library/Frameworks/OpenGL.framework \
+    -DPLATFORM=OS64COMBINED \
+    -G Xcode \
     ..
 
-make -j$(sysctl -n hw.ncpu)
+# make -j$(sysctl -n hw.ncpu)
 
-# cmake \
-#     -DCMAKE_BUILD_TYPE=Release \
-#     -DSFIZZ_JACK=OFF \
-#     -DSFIZZ_RENDER=OFF \
-#     -DSFIZZ_LV2=OFF \
-#     -DSFIZZ_LV2_UI=OFF \
-#     -DSFIZZ_VST=OFF \
-#     -DSFIZZ_AU=OFF \
-#     -DAPPLE_APPKIT_LIBRARY=/System/Library/Frameworks/AppKit.framework \
-#     -DAPPLE_CARBON_LIBRARY=/System/Library/Frameworks/Carbon.framework \
-#     -DAPPLE_COCOA_LIBRARY=/System/Library/Frameworks/Cocoa.framework \
-#     -DAPPLE_OPENGL_LIBRARY=/System/Library/Frameworks/OpenGL.framework \
-#     -DCMAKE_TOOLCHAIN_FILE=../../ios-cmake/ios.toolchain.cmake \
-#     -DPLATFORM=OS64COMBINED \
-#     -G Xcode ..
+# xcodebuild -project sfizz.xcodeproj -alltargets -configuration Release build -output sfizz.xcframework
 
-# cmake --build . --config Release
+xcodebuild -project sfizz.xcodeproj -scheme ALL_BUILD -xcconfig ../../../overrides.xcconfig -configuration Release -destination "generic/platform=iOS" -destination "generic/platform=iOS Simulator"
+
+# Create a fat library
+deviceLibs=(**/Release-iphoneos/*.a);
+simulatorLibs=(**/Release-iphonesimulator/*.a);
+lipo \
+    -create $deviceLibs $simulatorLibs \
+    -output libsfizz.a

@@ -1,6 +1,5 @@
 import Foundation
 import AVFoundation
-import AudioKit
 
 public class CocoaEngine {
     var scheduler: UnsafeMutableRawPointer!
@@ -17,9 +16,6 @@ public class CocoaEngine {
         outputFormat = engine.outputNode.outputFormat(forBus: 0)
         
         self.registrar = registrar
-        
-        AKSampler.register()
-        AKSettings.enableLogging = true
 
         initMixer {
             self.scheduler = InitScheduler(self.mixer!.audioUnit, self.outputFormat.sampleRate)
@@ -34,6 +30,7 @@ public class CocoaEngine {
         scheduler.deallocate()
     }
     
+    /*
     func addTrackSampler(completion: @escaping (track_index_t?) -> Void) {
         let trackIndex = SchedulerAddTrack(self.scheduler)
 
@@ -48,7 +45,9 @@ public class CocoaEngine {
             }
         }
     }
+     */
     
+    /*
     func addSampleToSampler(trackIndex: track_index_t, samplePath: String, isAsset: Bool, sd: AKSampleDescriptor, completion: @escaping (Bool) -> Void) {
         if let url = getUrlForPath(samplePath, isAsset: isAsset) {
             if let avAudioUnit = self.getAvAudioUnits()[trackIndex] {
@@ -89,18 +88,10 @@ public class CocoaEngine {
             completion(false)
         }
     }
+    */
     
     func buildKeyMap(trackIndex: track_index_t, completion: @escaping (Bool) -> Void) {
-        if let avAudioUnit = getAvAudioUnits()[trackIndex] {
-            if let akSamplerAU = avAudioUnit.auAudioUnit as? AKSamplerAudioUnit {
-                akSamplerAU.buildSimpleKeyMap()
-                completion(true)
-            } else {
-                completion(false)
-            }
-        } else {
-            completion(false)
-        }
+        completion(false)
     }
     
     func addTrackSf2(sf2Path: String, isAsset: Bool, presetIndex: Int32, completion: @escaping (track_index_t) -> Void) {

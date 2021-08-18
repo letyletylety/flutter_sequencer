@@ -1,8 +1,8 @@
+import Flutter
 import Foundation
 import AudioToolbox
 import CoreAudio
 import AVFoundation
-import AudioKit
 
 var plugin: SwiftFlutterSequencerPlugin!
 
@@ -77,6 +77,7 @@ func destroyEngine() {
 
 @_cdecl("add_track_sampler")
 func addTrackSampler(trackIndexCallbackPort: Dart_Port) {
+    /*
     plugin.engine!.addTrackSampler { trackIndex in
         if let trackIndex = trackIndex {
             callbackToDartInt32(trackIndexCallbackPort, Int32(trackIndex))
@@ -84,6 +85,8 @@ func addTrackSampler(trackIndexCallbackPort: Dart_Port) {
             callbackToDartInt32(trackIndexCallbackPort, -1)
         }
     }
+    */
+    callbackToDartInt32(trackIndexCallbackPort, -1)
 }
 
 @_cdecl("add_sample_to_sampler")
@@ -105,6 +108,7 @@ func addSampleToSampler(
     resultCallbackPort: Dart_Port
 ) {
     DispatchQueue.global(qos: .default).async {
+        /*
         let sd = AKSampleDescriptor(
             noteNumber: noteNumber,
             noteFrequency: noteFrequency,
@@ -126,6 +130,8 @@ func addSampleToSampler(
         ) { result in
             callbackToDartBool(resultCallbackPort, result)
         }
+        */
+        callbackToDartBool(resultCallbackPort, false)
     }
 }
 
