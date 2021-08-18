@@ -53,9 +53,13 @@ cmake \
 
 xcodebuild -project sfizz.xcodeproj -scheme ALL_BUILD -xcconfig ../../../overrides.xcconfig -configuration Release -destination "generic/platform=iOS" -destination "generic/platform=iOS Simulator"
 
-# Create a fat library
+# Create fat libraries
+#
 deviceLibs=(**/Release-iphoneos/*.a);
 simulatorLibs=(**/Release-iphonesimulator/*.a);
+
+libtool -static -o libsfizz_all_iphoneos.a $deviceLibs
+libtool -static -o libsfizz_all_iphonesimulator.a $simulatorLibs
 lipo \
-    -create $deviceLibs $simulatorLibs \
-    -output libsfizz.a
+    -create libsfizz_all_iphoneos.a libsfizz_all_iphonesimulator.a \
+    -output libsfizz_fat.a

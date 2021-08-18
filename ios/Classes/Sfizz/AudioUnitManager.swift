@@ -17,15 +17,6 @@ public class AudioUnitManager {
     /// The user-selected audio unit.
     private var audioUnit: SfizzAU?
 
-    // The audio unit's filter cutoff frequency parameter object.
-    private var cutoffParameter: AUParameter!
-
-    // The audio unit's filter resonance parameter object.
-    private var resonanceParameter: AUParameter!
-
-    // A token for our registration to observe parameter value changes.
-    private var parameterObserverToken: AUParameterObserverToken!
-
     // The AudioComponentDescription matching the AUv3FilterExtension Info.plist
     private var componentDescription: AudioComponentDescription = {
 
@@ -80,10 +71,5 @@ public class AudioUnitManager {
         guard self.audioUnit?.loadFile(path: path) == true else {
             fatalError("Sfizz failed to load file")
         }
-    }
-
-    public func cleanup() {
-        guard let parameterTree = audioUnit?.parameterTree else { return }
-        parameterTree.removeParameterObserver(parameterObserverToken)
     }
 }

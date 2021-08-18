@@ -39,4 +39,5 @@ A new flutter plugin project.
     'CLANG_CXX_LIBRARY' => 'libc++'
   }
   s.prepare_command = './prepare.sh'
+  s.vendored_libraries = 'third_party/sfizz/build/libsfizz_fat.a'
 end

@@ -22,6 +22,8 @@ public class CocoaEngine {
 
             callbackToDartInt32(sampleRateCallbackPort, Int32(self.outputFormat.sampleRate))
         }
+        
+        SfizzAU.registerAU()
     }
     
     deinit {
@@ -94,6 +96,29 @@ public class CocoaEngine {
         completion(false)
     }
     
+    func addTrackSfz(sfzPath: String, isAsset: Bool, completion: @escaping (track_index_t) -> Void) {
+        AudioUnitUtils.instantiate(
+            description: SfizzAU.componentDescription,
+            sampleRate: self.outputFormat.sampleRate,
+            options: AudioComponentInstantiationOptions.loadOutOfProcess
+        ) { avAudioUnit in
+            AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
+            let sfizzAU = avAudioUnit.auAudioUnit as! SfizzAU
+            
+            if let normalizedPath = self.normalizePath(sfzPath, isAsset: isAsset) {
+                if (sfizzAU.loadFile(path: normalizedPath)) {
+                    let trackIndex = SchedulerAddTrack(self.scheduler)
+                    self.setTrackAudioUnit(trackIndex: trackIndex, avAudioUnit: avAudioUnit)
+                    completion(trackIndex)
+                } else {
+                    completion(-1)
+                }
+            } else {
+                completion(-1)
+            }
+        }
+    }
+    
     func addTrackSf2(sf2Path: String, isAsset: Bool, presetIndex: Int32, completion: @escaping (track_index_t) -> Void) {
         let trackIndex = SchedulerAddTrack(self.scheduler)
 
@@ -108,7 +133,8 @@ public class CocoaEngine {
                 ) { avAudioUnit in
                     AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
                     
-                    if let url = self.getUrlForPath(sf2Path, isAsset: isAsset) {
+                    if let normalizedPath = self.normalizePath(sf2Path, isAsset: isAsset) {
+                        let url = URL(fileURLWithPath: normalizedPath)
                         
                         loadSoundFont(avAudioUnit: avAudioUnit, soundFontURL: url, presetIndex: presetIndex)
                         
@@ -228,15 +254,15 @@ public class CocoaEngine {
         self.unsafeAvAudioUnits = nextAvAudioUnits;
     }
     
-    private func getUrlForPath(_ path: String, isAsset: Bool) -> URL? {
+    private func normalizePath(_ path: String, isAsset: Bool) -> String? {
         if (!isAsset) {
-            return URL(fileURLWithPath: path)
+            return path
         } else {
             let key = registrar.lookupKey(forAsset: path)
             let bundlePath = Bundle.main.path(forResource: key, ofType: nil)
             
             if let bundlePath = bundlePath {
-                return URL(fileURLWithPath: bundlePath)
+                return bundlePath
             } else {
                 return nil
             }

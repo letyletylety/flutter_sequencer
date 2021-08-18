@@ -111,6 +111,28 @@ public class SfizzAU: AUAudioUnit {
     public func loadFile(path: String) -> Bool {
         return kernelAdapter.loadFile(path)
     }
+    
+    public static var componentDescription: AudioComponentDescription = {
+        
+        // Ensure that AudioUnit type, subtype, and manufacturer match the extension's Info.plist values
+        var componentDescription = AudioComponentDescription()
+        componentDescription.componentType = kAudioUnitType_MusicDevice
+        componentDescription.componentSubType = 0x7366697a /*'sfizz'*/
+        componentDescription.componentManufacturer = 0x6d706673 /*'mpfs'*/
+        componentDescription.componentFlags = 0
+        componentDescription.componentFlagsMask = 0
+
+        return componentDescription
+    }()
+    
+    public static var componentName = "FlutterSequencerSfizz"
+    
+    public static func registerAU() -> Void {
+        AUAudioUnit.registerSubclass(SfizzAU.self,
+                                     as: componentDescription,
+                                     name: componentName,
+                                     version: UInt32.max)
+    }
 }
 
 extension FourCharCode {
