@@ -2,7 +2,7 @@
 #import "./CocoaScheduler/CocoaScheduler.h"
 #import "./Scheduler/BaseScheduler.h"
 #import "./Scheduler/SchedulerEvent.h"
-#import "./Sfizz/AudioUnit/Support/SfizzDSPKernelAdapter.h"
+#import "./Sfizz/SfizzDSPKernelAdapter.h"
 
 #import "FlutterSequencerPlugin.h"
 #if __has_include(<flutter_sequencer/flutter_sequencer-Swift.h>)

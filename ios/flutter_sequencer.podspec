@@ -18,7 +18,7 @@ A new flutter plugin project.
     'flutter_sequencer' => ['prepare.sh']
   }
   s.xcconfig = {
-    'USER_HEADER_SEARCH_PATHS' => '"${PROJECT_DIR}/.."/Classes/CallbackManager/*,"${PROJECT_DIR}/.."/Classes/Scheduler/*,"${PROJECT_DIR}/.."/Classes/Sfizz/AudioUnit/Support/SfizzDSPKernelAdapter.h',
+    'USER_HEADER_SEARCH_PATHS' => '"${PROJECT_DIR}/.."/Classes/CallbackManager/*,"${PROJECT_DIR}/.."/Classes/Scheduler/*,"${PROJECT_DIR}/.."/Classes/Sfizz/SfizzDSPKernelAdapter.h',
   }
   s.dependency 'Flutter'
   s.static_framework = true
