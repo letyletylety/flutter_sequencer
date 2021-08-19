@@ -133,6 +133,10 @@ public class CocoaEngine {
                 ) { avAudioUnit in
                     AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
                     
+                    // Apple Sampler needs to be initialized again or pre-loading patch won't work
+                    let error = AudioUnitInitialize(avAudioUnit.audioUnit)
+                    assert(error == noErr)
+                    
                     if let normalizedPath = self.normalizePath(sf2Path, isAsset: isAsset) {
                         let url = URL(fileURLWithPath: normalizedPath)
                         
@@ -222,10 +226,10 @@ public class CocoaEngine {
             self.mixer = avAudioUnit
             
             if let avAudioUnit = avAudioUnit {
+                let hardwareFormat = self.engine.outputNode.outputFormat(forBus: 0)
+                
                 self.engine.attach(avAudioUnit)
-                let auOutputFormat = avAudioUnit.outputFormat(forBus: 0)
-            
-                self.engine.connect(avAudioUnit, to: self.engine.outputNode, format: auOutputFormat)
+                self.engine.connect(avAudioUnit, to: self.engine.outputNode, format: hardwareFormat)
                 
                 completion()
             }
@@ -233,9 +237,11 @@ public class CocoaEngine {
     }
     
     func connect(avAudioUnit: AVAudioUnit, trackIndex: Int32) {
-        self.engine.attach(avAudioUnit)
+        // let hardwareFormat = self.engine.outputNode.outputFormat(forBus: 0)
+        // let stereoFormat = AVAudioFormat(standardFormatWithSampleRate: hardwareFormat.sampleRate, channels: 2)
         let auOutputFormat = avAudioUnit.outputFormat(forBus: 0)
-
+        
+        self.engine.attach(avAudioUnit)
         self.engine.connect(avAudioUnit, to: self.mixer!, fromBus: 0, toBus: AVAudioNodeBus(trackIndex), format: auOutputFormat)
     }
     

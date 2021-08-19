@@ -23,15 +23,22 @@ public:
 
     // MARK: Member Functions
 
-    SfizzDSPKernel() {}
+    SfizzDSPKernel() {
+        mSampler = std::make_unique<sfz::Sfizz>();
+    }
 
     void init(int inChannelCount, double inSampleRate) {
         channelCount = inChannelCount;
         sampleRate = float(inSampleRate);
 
-        mSampler = std::make_unique<sfz::Sfizz>();
         mSampler->setSampleRate(sampleRate);
         mSampler->setSamplesPerBlock(maximumFramesToRender());
+        
+        auto volume = mSampler->getVolume();
+        std::cout << "Volume: " << volume;
+        mSampler->setVolume(1.0);
+        volume = mSampler->getVolume();
+        std::cout << "Volume: " << volume;
     }
 
     void reset() {
