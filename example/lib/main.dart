@@ -48,15 +48,16 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     final instruments = [
       Sf2Instrument(path: "assets/sf2/TR-808.sf2", isAsset: true),
       SfzInstrument(path: "assets/sfz/GMPiano.sfz", isAsset: true),
-      Sf2Instrument(path: "assets/sf2/TR-808.sf2", isAsset: true),
-      // SamplerInstrument(
-      //   id: "80's FM Bass",
-      //   sampleDescriptors: [
-      //     SampleDescriptor(filename: "assets/wav/D3.wav", isAsset: true, noteNumber: 62),
-      //     SampleDescriptor(filename: "assets/wav/F3.wav", isAsset: true, noteNumber: 65),
-      //     SampleDescriptor(filename: "assets/wav/G#3.wav", isAsset: true, noteNumber: 68),
-      //   ]
-      // )
+      SamplerInstrument(
+        id: "80's FM Bass",
+        sampleRoot: "assets/wav",
+        isAsset: true,
+        sampleDescriptors: [
+          SampleDescriptor(filename: "D3.wav", noteNumber: 62),
+          SampleDescriptor(filename: "F3.wav", noteNumber: 65),
+          SampleDescriptor(filename: "G#3.wav", noteNumber: 68),
+        ]
+      )
     ];
 
     sequence.createTracks(instruments).then((tracks) {

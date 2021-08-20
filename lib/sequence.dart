@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter_sequencer/sfz_parser.dart';
+import 'package:flutter_sequencer/utils/sfz.dart';
+import 'package:path/path.dart' as p;
 
 import 'constants.dart';
 import 'global_state.dart';
@@ -347,21 +349,42 @@ class Sequence {
     if (instrument is Sf2Instrument) {
       id = await NativeBridge.addTrackSf2(instrument.idOrPath, instrument.isAsset, instrument.presetIndex);
     } else if (instrument is SfzInstrument) {
-      id = await NativeBridge.addTrackSfz(instrument.idOrPath, instrument.isAsset);
-      // final parseResult = await parseSfz(instrument.idOrPath, instrument.isAsset);
-      // final samplerInstrument =
-      // SamplerInstrument(
-      //   id: instrument.idOrPath,
-      //   sampleDescriptors: parseResult.sampleDescriptors);
+      final sfzFile = File(instrument.idOrPath);
+      String? normalizedSfzPath;
 
-      // id = await _createSamplerTrack(samplerInstrument);
+      if (instrument.isAsset) {
+        final normalizedSfzDir = await NativeBridge.copyAssetDir(sfzFile.parent.path);
+
+        if (normalizedSfzDir == null) return null;
+        normalizedSfzPath = '$normalizedSfzDir/${p.basename(sfzFile.path)}';
+      } else {
+        normalizedSfzPath = sfzFile.path;
+      }
+
+      id = await NativeBridge.addTrackSfz(normalizedSfzPath);
     } else if (instrument is SamplerInstrument) {
-      id = await _createSamplerTrack(instrument);
+      final sfzContent = Sfz.buildSfz(instrument.sampleDescriptors);
+      String? normalizedSampleRoot;
+
+      if (instrument.isAsset) {
+        normalizedSampleRoot = await NativeBridge.copyAssetDir(instrument.sampleRoot);
+
+        if (normalizedSampleRoot == null) return null;
+      } else {
+        normalizedSampleRoot = instrument.sampleRoot;
+      }
+
+      // Sfizz uses the parent path of this (line 73 of Parser.cpp)
+      final fakeSfzDir = '$normalizedSampleRoot/does_not_exist.sfz';
+
+      id = await NativeBridge.addTrackSfzString(fakeSfzDir, sfzContent);
     } else if (instrument is AudioUnitInstrument) {
       id = await NativeBridge.addTrackAudioUnit(instrument.idOrPath);
     } else {
       return null;
     }
+
+    if (id == -1) return null;
 
     final track =
       Track(
@@ -380,24 +403,5 @@ class Sequence {
     final nonNullTracks = tracks.whereType<Track>().toList();
 
     return nonNullTracks;
-  }
-
-  /// Creates a sampler track and adds the sample descriptors.
-  Future<int> _createSamplerTrack(SamplerInstrument samplerInstrument) async {
-    final trackIndex = await NativeBridge.addTrackSampler();
-
-    final addSampleFutures =
-    samplerInstrument.sampleDescriptors.map((sd) =>
-      NativeBridge.addSampleToSampler(trackIndex, sd));
-
-    await Future.wait(addSampleFutures);
-
-    final buildKeyMapResult = await NativeBridge.samplerBuildKeyMap(trackIndex);
-
-    if (buildKeyMapResult) {
-      return trackIndex;
-    } else {
-      return -1;
-    }
   }
 }

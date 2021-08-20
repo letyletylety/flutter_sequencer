@@ -7,33 +7,26 @@
 
 class SfizzSamplerInstrument : public IInstrument {
 public:
-    SfizzSamplerInstrument(int32_t sampleRate, bool isStereo, const char* path, bool isAsset) {
-        assert(isStereo == true); // Only stereo is supported
+    SfizzSamplerInstrument(int32_t sampleRate, bool isStereo, const char* sampleRoot, const char* sfzString) {
+        mIsStereo = isStereo;
 
         mSampler = std::make_unique<sfz::Sfizz>();
         mSampler->setSampleRate(sampleRate);
         mSampler->setSamplesPerBlock(1024);
-        std::string pathStr(path);
-        bool didLoad;
 
-        if (isAsset) {
-            auto asset = openAssetBuffer(path);
-            auto assetBuffer = static_cast<const char*>(AAsset_getBuffer(asset));
-            auto assetLength = AAsset_getLength(asset);
+        auto loadResult = mSampler->loadSfzString(sampleRoot, sfzString);
+        mDidLoad = loadResult && mSampler->getNumRegions() > 0 && mSampler->getNumPreloadedSamples();
+    }
 
-            std::string sfzString(assetBuffer, assetLength);
+    SfizzSamplerInstrument(int32_t sampleRate, bool isStereo, const char* path) {
+        mIsStereo = isStereo;
 
-            didLoad = mSampler->loadSfzString(pathStr, sfzString);
+        mSampler = std::make_unique<sfz::Sfizz>();
+        mSampler->setSampleRate(sampleRate);
+        mSampler->setSamplesPerBlock(1024);
 
-            AAsset_close(asset);
-        } else {
-            didLoad = mSampler->loadSfzFile(pathStr);
-        }
-
-        auto numRegions = mSampler->getNumRegions();
-        auto numPreloadedSamples = mSampler->getNumPreloadedSamples();
-
-        LOGI("SFZ did load: %i, num regions: %i, num preloaded: %i", didLoad, numRegions, numPreloadedSamples);
+        auto loadResult = mSampler->loadSfzFile(path);
+        mDidLoad = loadResult && mSampler->getNumRegions() > 0 && mSampler->getNumPreloadedSamples();
     }
 
     ~SfizzSamplerInstrument() {
@@ -53,11 +46,15 @@ public:
             rightBuffer[f] = 0.;
         }
 
-        mSampler->renderBlock(buffers, numFrames, 1);
+        mSampler->renderBlock(buffers, numFrames);
 
         for (int f = 0; f < numFrames; f++) {
-            for (int c = 0; c < 2; c++) {
-                audioData[f * 2 + c] = buffers[c][f];
+            if (mIsStereo) {
+                for (int c = 0; c < 2; c++) {
+                    audioData[f * 2 + c] = buffers[c][f];
+                }
+            } else {
+                audioData[f] = (buffers[0][f] + buffers[1][f]) / 2;
             }
         }
     }
@@ -75,7 +72,13 @@ public:
     void reset() override {
     }
 
+    bool didLoad() {
+        return mDidLoad;
+    }
+
 private:
+    bool mDidLoad;
+    bool mIsStereo;
     std::unique_ptr<sfz::Sfizz> mSampler;
 };
 

@@ -18,8 +18,14 @@ abstract class Instrument  {
 /// Will be played by the AudioKit Sampler on Android and iOS.
 class SamplerInstrument extends Instrument {
   final List<SampleDescriptor> sampleDescriptors;
+  final String sampleRoot;
 
-  SamplerInstrument({ required String id, required this.sampleDescriptors }) : super(id, false);
+  SamplerInstrument({
+    required String id,
+    required bool isAsset,
+    required this.sampleRoot,
+    required this.sampleDescriptors
+  }) : super(id, isAsset);
 }
 
 /// Describes an instrument in SFZ format. The SFZ will be parsed and used to

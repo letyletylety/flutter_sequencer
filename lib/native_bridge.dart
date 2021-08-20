@@ -5,7 +5,6 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 
 import 'models/events.dart';
-import 'models/sample_descriptor.dart';
 import 'utils/isolate.dart';
 
 final DynamicLibrary nativeLib = Platform.isAndroid
@@ -28,25 +27,17 @@ final nDestroyEngine = nativeLib.lookupFunction<
   Void Function(),
   void Function()>('destroy_engine');
 
-final nAddTrackSampler = nativeLib.lookupFunction<
-  Void Function(Int64),
-  void Function(int)>('add_track_sampler');
-
-final nAddSampleToSampler = nativeLib.lookupFunction<
-  Void Function(Int32, Pointer<Utf8>, Int8, Int32, Float, Int32, Int32, Int32, Int32, Int8, Float, Float, Float, Float, Int64),
-  void Function(int, Pointer<Utf8>, int, int?, double?, int?, int?, int?, int?, int, double?, double?, double?, double?, int)>('add_sample_to_sampler');
-
-final nBuildKeyMap = nativeLib.lookupFunction<
-  Void Function(Int32, Int64),
-  void Function(int, int)>('build_key_map');
-
 final nAddTrackSf2 = nativeLib.lookupFunction<
   Void Function(Pointer<Utf8>, Int8, Int32, Int64),
   void Function(Pointer<Utf8>, int, int, int)>('add_track_sf2');
 
 final nAddTrackSfz = nativeLib.lookupFunction<
-  Void Function(Pointer<Utf8>, Int8, Int64),
-  void Function(Pointer<Utf8>, int, int)>('add_track_sfz');
+  Void Function(Pointer<Utf8>, Int64),
+  void Function(Pointer<Utf8>, int)>('add_track_sfz');
+
+final nAddTrackSfzString = nativeLib.lookupFunction<
+  Void Function(Pointer<Utf8>, Pointer<Utf8>, Int64),
+  void Function(Pointer<Utf8>, Pointer<Utf8>, int)>('add_track_sfz_string');
 
 final nRemoveTrack = nativeLib.lookupFunction<
   Void Function(Int32),
@@ -107,15 +98,14 @@ class NativeBridge {
     return singleResponseFuture<int>((port) => nSetupEngine(port.nativePort));
   }
 
-  static Future<List<String>?> listAssetDir(String assetDir, String extension) async {
+  static Future<String?> copyAssetDir(String assetDir) async {
     final args = <String, dynamic>{
       'assetDir': assetDir,
-      'extension': extension
     };
-    final result = await _channel.invokeMethod('listAssetDir', args);
-    final List<String>? paths = result.cast<String>();
+    final result = await _channel.invokeMethod('copyAssetDir', args);
+    final String? path = result;
 
-    return paths;
+    return path;
   }
 
   static Future<List<String>?> listAudioUnits() async {
@@ -125,49 +115,20 @@ class NativeBridge {
     return audioUnitIds;
   }
 
-  static Future<int> addTrackSampler() {
-    return singleResponseFuture<int>((port) => nAddTrackSampler(port.nativePort));
-  }
-
-  static Future<bool> addSampleToSampler(
-    int trackIndex,
-    SampleDescriptor sampleDescriptor
-  ) {
-    final filenameUtf8Ptr = sampleDescriptor.filename.toNativeUtf8();
-
-    return singleResponseFuture<bool>((port) =>
-      nAddSampleToSampler(
-        trackIndex,
-        filenameUtf8Ptr,
-        sampleDescriptor.isAsset ? 1 : 0,
-        sampleDescriptor.noteNumber,
-        sampleDescriptor.noteFrequency,
-        sampleDescriptor.minimumNoteNumber,
-        sampleDescriptor.maximumNoteNumber,
-        sampleDescriptor.minimumVelocity,
-        sampleDescriptor.maximumVelocity,
-        sampleDescriptor.isLooping ? 1 : 0,
-        sampleDescriptor.loopStartPoint,
-        sampleDescriptor.loopEndPoint,
-        sampleDescriptor.startPoint,
-        sampleDescriptor.endPoint,
-        port.nativePort
-      ));
-  }
-
-  static Future<bool> samplerBuildKeyMap(int trackIndex) {
-    return singleResponseFuture<bool>((port) =>
-      nBuildKeyMap(trackIndex, port.nativePort));
-  }
-
   static Future<int> addTrackSf2(String filename, bool isAsset, int patchNumber) {
     final filenameUtf8Ptr = filename.toNativeUtf8();
     return singleResponseFuture<int>((port) => nAddTrackSf2(filenameUtf8Ptr, isAsset ? 1 : 0, patchNumber, port.nativePort));
   }
 
-  static Future<int> addTrackSfz(String filename, bool isAsset) {
+  static Future<int> addTrackSfz(String filename) {
     final filenameUtf8Ptr = filename.toNativeUtf8();
-    return singleResponseFuture<int>((port) => nAddTrackSfz(filenameUtf8Ptr, isAsset ? 1 : 0, port.nativePort));
+    return singleResponseFuture<int>((port) => nAddTrackSfz(filenameUtf8Ptr, port.nativePort));
+  }
+
+  static Future<int> addTrackSfzString(String sampleRoot, String sfzContent) {
+    final sampleRootUtf8Ptr = sampleRoot.toNativeUtf8();
+    final sfzContentUtf8Ptr = sfzContent.toNativeUtf8();
+    return singleResponseFuture<int>((port) => nAddTrackSfzString(sampleRootUtf8Ptr, sfzContentUtf8Ptr, port.nativePort));
   }
 
   static Future<int?> addTrackAudioUnit(String id) async {

@@ -34,12 +34,10 @@ public class SwiftFlutterSequencerPlugin: NSObject, FlutterPlugin {
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if (call.method == "setupAssetManager") {
             result(nil)
-        } else if (call.method == "listAssetDir") {
+        } else if (call.method == "copyAssetDir") {
             let assetDir = (call.arguments as AnyObject)["assetDir"] as! String
-            let fileExtension = (call.arguments as AnyObject)["extension"] as! String
-            
-            let paths = listAssetDir(assetDir, fileExtension: fileExtension, registrar: registrar)
-            result(paths)
+
+            result(copyAssetDir(assetDir: assetDir))
         } else if (call.method == "listAudioUnits") {
             listAudioUnits { result($0) }
         } else if (call.method == "addTrackAudioUnit") {
@@ -50,9 +48,8 @@ public class SwiftFlutterSequencerPlugin: NSObject, FlutterPlugin {
 }
 
 // Called from method channel
-func listAssetDir(_ assetDir: String, fileExtension: String, registrar: FlutterPluginRegistrar) -> [String] {
-    let dirKey: String = registrar.lookupKey(forAsset: assetDir)
-    return Bundle.main.paths(forResourcesOfType: fileExtension, inDirectory: dirKey)
+func copyAssetDir(assetDir: String) -> String? {
+    return Bundle.main.path(forResource: assetDir, ofType: nil)
 }
 
 // Called from method channel
@@ -75,78 +72,16 @@ func destroyEngine() {
     plugin.engine = nil
 }
 
-@_cdecl("add_track_sampler")
-func addTrackSampler(trackIndexCallbackPort: Dart_Port) {
-    /*
-    plugin.engine!.addTrackSampler { trackIndex in
-        if let trackIndex = trackIndex {
-            callbackToDartInt32(trackIndexCallbackPort, Int32(trackIndex))
-        } else {
-            callbackToDartInt32(trackIndexCallbackPort, -1)
-        }
-    }
-    */
-    callbackToDartInt32(trackIndexCallbackPort, -1)
-}
-
-@_cdecl("add_sample_to_sampler")
-func addSampleToSampler(
-    trackIndex: Int32,
-    samplePath: UnsafePointer<CChar>,
-    isAsset: Bool,
-    noteNumber: Int32,
-    noteFrequency: Float32,
-    minimumNoteNumber: Int32,
-    maximumNoteNumber: Int32,
-    minimumVelocity: Int32,
-    maximumVelocity: Int32,
-    isLooping: Bool,
-    loopStartPoint: Float32,
-    loopEndPoint: Float32,
-    startPoint: Float32,
-    endPoint: Float32,
-    resultCallbackPort: Dart_Port
-) {
-    DispatchQueue.global(qos: .default).async {
-        /*
-        let sd = AKSampleDescriptor(
-            noteNumber: noteNumber,
-            noteFrequency: noteFrequency,
-            minimumNoteNumber: minimumNoteNumber,
-            maximumNoteNumber: maximumNoteNumber,
-            minimumVelocity: minimumVelocity,
-            maximumVelocity: maximumVelocity,
-            isLooping: isLooping,
-            loopStartPoint: loopStartPoint,
-            loopEndPoint: loopEndPoint,
-            startPoint: startPoint,
-            endPoint: endPoint
-        )
-        plugin.engine!.addSampleToSampler(
-            trackIndex: trackIndex,
-            samplePath: String(cString: samplePath),
-            isAsset: isAsset,
-            sd: sd
-        ) { result in
-            callbackToDartBool(resultCallbackPort, result)
-        }
-        */
-        callbackToDartBool(resultCallbackPort, false)
-    }
-}
-
-@_cdecl("build_key_map")
-func buildKeyMap(trackIndex: track_index_t, resultCallbackPort: Dart_Port) {
-    DispatchQueue.global(qos: .default).async {
-        plugin.engine!.buildKeyMap(trackIndex: trackIndex) { result in
-            callbackToDartBool(resultCallbackPort, result)
-        }
-    }
-}
-
 @_cdecl("add_track_sfz")
-func addTrackSf2(path: UnsafePointer<CChar>, isAsset: Bool, callbackPort: Dart_Port) {
-    plugin.engine!.addTrackSfz(sfzPath: String(cString: path), isAsset: isAsset) { trackIndex in
+func addTrackSfz(path: UnsafePointer<CChar>, callbackPort: Dart_Port) {
+    plugin.engine!.addTrackSfz(sfzPath: String(cString: path)) { trackIndex in
+        callbackToDartInt32(callbackPort, trackIndex)
+    }
+}
+
+@_cdecl("add_track_sfz_string")
+func addTrackSfzString(sampleRoot: UnsafePointer<CChar>, sfzString: UnsafePointer<CChar>, callbackPort: Dart_Port) {
+    plugin.engine!.addTrackSfzString(sampleRoot: String(cString: sampleRoot), sfzString: String(cString: sfzString)) { trackIndex in
         callbackToDartInt32(callbackPort, trackIndex)
     }
 }

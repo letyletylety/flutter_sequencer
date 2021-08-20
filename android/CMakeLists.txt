@@ -55,7 +55,6 @@ TARGET_SOURCES(flutter_sequencer PRIVATE
         ./src/main/cpp/Engine/IInstrument.h
         ./src/main/cpp/Engine/Mixer.h
         ./src/main/cpp/Engine/SoundFontInstrument.h
-        ./src/main/cpp/Engine/SamplerInstrument.h
         ./src/main/cpp/Engine/SfizzSamplerInstrument.h
         ./src/main/cpp/Utils/AssetManager.h
         ./src/main/cpp/Utils/Logging.h

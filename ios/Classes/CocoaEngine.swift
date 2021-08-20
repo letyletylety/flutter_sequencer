@@ -32,71 +32,7 @@ public class CocoaEngine {
         scheduler.deallocate()
     }
     
-    /*
-    func addTrackSampler(completion: @escaping (track_index_t?) -> Void) {
-        let trackIndex = SchedulerAddTrack(self.scheduler)
-
-        AVAudioUnit.instantiate(with: AKSampler.ComponentDescription, options: []) { avAudioUnit, err in
-            if let avAudioUnit = avAudioUnit {
-                AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
-                self.setTrackAudioUnit(trackIndex: trackIndex, avAudioUnit: avAudioUnit)
-                
-                completion(trackIndex)
-            } else {
-                completion(nil)
-            }
-        }
-    }
-     */
-    
-    /*
-    func addSampleToSampler(trackIndex: track_index_t, samplePath: String, isAsset: Bool, sd: AKSampleDescriptor, completion: @escaping (Bool) -> Void) {
-        if let url = getUrlForPath(samplePath, isAsset: isAsset) {
-            if let avAudioUnit = self.getAvAudioUnits()[trackIndex] {
-                if let akSamplerAU = avAudioUnit.auAudioUnit as? AKSamplerAudioUnit {
-                    if url.path.hasSuffix(".wv") {
-                        url.path.cString(using: .ascii)?.withUnsafeBufferPointer { buffer in
-                            akSamplerAU.loadCompressedSampleFile(
-                                from: AKSampleFileDescriptor(sampleDescriptor: sd, path: buffer.baseAddress))
-                            completion(true)
-                        }
-                    } else {
-                        do {
-                            let file = try AKAudioFile(forReading: url)
-                            let sampleRate = Float(file.sampleRate)
-                            let sampleCount = Int32(file.samplesCount)
-                            let channelCount = Int32(file.channelCount)
-                            var flattened = Array(file.floatChannelData!.joined())
-                            flattened.withUnsafeMutableBufferPointer { data in
-                                akSamplerAU.loadSampleData(from: AKSampleDataDescriptor(sampleDescriptor: sd,
-                                                                                        sampleRate: sampleRate,
-                                                                                        isInterleaved: false,
-                                                                                        channelCount: channelCount,
-                                                                                        sampleCount: sampleCount,
-                                                                                        data: data.baseAddress) )
-                            }
-                            completion(true)
-                        } catch {
-                            completion(false)
-                        }
-                    }
-                } else {
-                    completion(false)
-                }
-            } else {
-                completion(false)
-            }
-        } else {
-            completion(false)
-        }
-    }
-    */
-    
-    func buildKeyMap(trackIndex: track_index_t, completion: @escaping (Bool) -> Void) {
-        completion(false)
-    }
-    
-    func addTrackSfz(sfzPath: String, isAsset: Bool, completion: @escaping (track_index_t) -> Void) {
+    func addTrackSfz(sfzPath: String, completion: @escaping (track_index_t) -> Void) {
         AudioUnitUtils.instantiate(
             description: SfizzAU.componentDescription,
             sampleRate: self.outputFormat.sampleRate,
@@ -105,14 +41,29 @@ public class CocoaEngine {
             AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
             let sfizzAU = avAudioUnit.auAudioUnit as! SfizzAU
             
-            if let normalizedPath = self.normalizePath(sfzPath, isAsset: isAsset) {
-                if (sfizzAU.loadFile(path: normalizedPath)) {
-                    let trackIndex = SchedulerAddTrack(self.scheduler)
-                    self.setTrackAudioUnit(trackIndex: trackIndex, avAudioUnit: avAudioUnit)
-                    completion(trackIndex)
-                } else {
-                    completion(-1)
-                }
+            if (sfizzAU.loadSfzFile(path: sfzPath)) {
+                let trackIndex = SchedulerAddTrack(self.scheduler)
+                self.setTrackAudioUnit(trackIndex: trackIndex, avAudioUnit: avAudioUnit)
+                completion(trackIndex)
+            } else {
+                completion(-1)
+            }
+        }
+    }
+    
+    func addTrackSfzString(sampleRoot: String, sfzString: String, completion: @escaping (track_index_t) -> Void) {
+        AudioUnitUtils.instantiate(
+            description: SfizzAU.componentDescription,
+            sampleRate: self.outputFormat.sampleRate,
+            options: AudioComponentInstantiationOptions.loadOutOfProcess
+        ) { avAudioUnit in
+            AudioUnitUtils.setSampleRate(avAudioUnit: avAudioUnit, sampleRate: self.outputFormat.sampleRate)
+            let sfizzAU = avAudioUnit.auAudioUnit as! SfizzAU
+
+            if (sfizzAU.loadSfzString(sampleRoot: sampleRoot, sfzString: sfzString)) {
+                let trackIndex = SchedulerAddTrack(self.scheduler)
+                self.setTrackAudioUnit(trackIndex: trackIndex, avAudioUnit: avAudioUnit)
+                completion(trackIndex)
             } else {
                 completion(-1)
             }

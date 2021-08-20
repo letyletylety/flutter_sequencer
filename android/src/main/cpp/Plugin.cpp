@@ -1,6 +1,5 @@
 #include <thread>
 #include "AndroidEngine/AndroidEngine.h"
-#include "Engine/SamplerInstrument.h"
 #include "Engine/SfizzSamplerInstrument.h"
 #include "Engine/SoundFontInstrument.h"
 #include "Utils/OptionArray.h"
@@ -25,95 +24,6 @@ extern "C" {
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
-    void add_track_sampler(Dart_Port trackIndexCallbackPort) {
-        check_engine();
-
-        std::thread([=]() {
-            auto sampleRate = engine->getSampleRate();
-            auto channelCount = engine->getChannelCount();
-            auto isStereo = channelCount > 1;
-            auto samplerInstrument = new SamplerInstrument(sampleRate, isStereo);
-
-            auto trackIndex = engine->mSchedulerMixer.addTrack(samplerInstrument);
-
-            callbackToDartInt32(trackIndexCallbackPort, trackIndex);
-        }).detach();
-    }
-
-    __attribute__((visibility("default"))) __attribute__((used))
-    void add_sample_to_sampler(
-        track_index_t trackIndex,
-        char* samplePath,
-        bool isAsset,
-        int noteNumber,
-        float noteFrequency,
-        int minimumNoteNumber,
-        int maximumNoteNumber,
-        int minimumVelocity,
-        int maximumVelocity,
-        bool isLooping,
-        float loopStartPoint,
-        float loopEndPoint,
-        float startPoint,
-        float endPoint,
-        Dart_Port resultCallbackPort
-    ) {
-        check_engine();
-        std::string samplePathStr { samplePath };
-
-        std::thread([=]() {
-            AKSampleDescriptor sampleDescriptor = {
-                    .noteNumber = noteNumber,
-                    .noteFrequency = noteFrequency,
-                    .minimumNoteNumber = minimumNoteNumber,
-                    .maximumNoteNumber = maximumNoteNumber,
-                    .minimumVelocity = minimumVelocity,
-                    .maximumVelocity = maximumVelocity,
-                    .isLooping = isLooping,
-                    .loopStartPoint = loopStartPoint,
-                    .loopEndPoint = loopEndPoint,
-                    .startPoint = startPoint,
-                    .endPoint = endPoint,
-            };
-
-            auto instrument = engine->mSchedulerMixer.getTrack(trackIndex);
-
-            if (!instrument.has_value()) {
-                callbackToDartBool(resultCallbackPort, false);
-                return;
-            }
-
-            auto samplerInstrument = dynamic_cast<SamplerInstrument *>(instrument.value());
-
-            if (samplerInstrument == nullptr) {
-                callbackToDartBool(resultCallbackPort, false);
-                return;
-            }
-
-            auto loadSampleResult = samplerInstrument->loadSample(samplePathStr, sampleDescriptor,
-                                                                  isAsset);
-
-            callbackToDartBool(resultCallbackPort, loadSampleResult);
-        }).detach();
-    }
-
-    __attribute__((visibility("default"))) __attribute__((used))
-    void build_key_map(track_index_t trackIndex, Dart_Port resultCallbackPort) {
-        auto instrument = engine->mSchedulerMixer.getTrack(trackIndex);
-
-        if (!instrument.has_value()) {
-            callbackToDartBool(resultCallbackPort, false);
-            return;
-        }
-
-        auto samplerInstrument = dynamic_cast<SamplerInstrument *>(instrument.value());
-
-        samplerInstrument->buildKeyMap();
-
-        callbackToDartBool(resultCallbackPort, true);
-    }
-
-    __attribute__((visibility("default"))) __attribute__((used))
     void add_track_sf2(const char* filename, bool isAsset, int32_t presetIndex, Dart_Port callbackPort) {
         check_engine();
 
@@ -130,7 +40,7 @@ extern "C" {
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
-    void add_track_sfz(const char* filename, bool isAsset, Dart_Port callbackPort) {
+    void add_track_sfz(const char* filename, Dart_Port callbackPort) {
         check_engine();
 
         std::thread([=]() {
@@ -138,10 +48,36 @@ extern "C" {
             auto channelCount = engine->getChannelCount();
             auto isStereo = channelCount > 1;
 
-            auto sf2Instrument = new SfizzSamplerInstrument(sampleRate, isStereo, filename, isAsset);
-            auto trackIndex = engine->mSchedulerMixer.addTrack(sf2Instrument);
+            auto sfzInstrument = new SfizzSamplerInstrument(sampleRate, isStereo, filename);
 
-            callbackToDartInt32(callbackPort, trackIndex);
+            if (sfzInstrument->didLoad()) {
+                auto trackIndex = engine->mSchedulerMixer.addTrack(sfzInstrument);
+
+                callbackToDartInt32(callbackPort, trackIndex);
+            } else {
+                callbackToDartInt32(callbackPort, -1);
+            }
+        }).detach();
+    }
+
+    __attribute__((visibility("default"))) __attribute__((used))
+    void add_track_sfz_string(const char* sampleRoot, const char* sfzString, Dart_Port callbackPort) {
+        check_engine();
+
+        std::thread([=]() {
+            auto sampleRate = engine->getSampleRate();
+            auto channelCount = engine->getChannelCount();
+            auto isStereo = channelCount > 1;
+
+            auto sfzInstrument = new SfizzSamplerInstrument(sampleRate, isStereo, sampleRoot, sfzString);
+
+            if (sfzInstrument->didLoad()) {
+                auto trackIndex = engine->mSchedulerMixer.addTrack(sfzInstrument);
+
+                callbackToDartInt32(callbackPort, trackIndex);
+            } else {
+                callbackToDartInt32(callbackPort, -1);
+            }
         }).detach();
     }
 
