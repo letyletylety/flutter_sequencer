@@ -37,7 +37,7 @@ public class SwiftFlutterSequencerPlugin: NSObject, FlutterPlugin {
         } else if (call.method == "copyAssetDir") {
             let assetDir = (call.arguments as AnyObject)["assetDir"] as! String
 
-            result(copyAssetDir(assetDir: assetDir))
+            result(copyAssetDir(registrar: registrar, assetDir: assetDir))
         } else if (call.method == "listAudioUnits") {
             listAudioUnits { result($0) }
         } else if (call.method == "addTrackAudioUnit") {
@@ -48,8 +48,17 @@ public class SwiftFlutterSequencerPlugin: NSObject, FlutterPlugin {
 }
 
 // Called from method channel
-func copyAssetDir(assetDir: String) -> String? {
-    return Bundle.main.path(forResource: assetDir, ofType: nil)
+func copyAssetDir(registrar: FlutterPluginRegistrar, assetDir: String) -> String? {
+    let key = registrar.lookupKey(forAsset: assetDir)
+    let paths = Bundle.main.paths(forResourcesOfType: nil, inDirectory: key)
+    
+    if let firstPath = paths.first {
+        let path = URL(fileURLWithPath: firstPath).deletingLastPathComponent().path
+
+        return path
+    } else {
+        return nil
+    }
 }
 
 // Called from method channel
